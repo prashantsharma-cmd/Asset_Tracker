@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Device Journey Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0e0f11;
+  --surface: #16181c;
+  --surface2: #1e2026;
+  --border: #2a2d35;
+  --border2: #363a45;
+  --text: #e8eaf0;
+  --muted: #6b7080;
+  --accent: #4f8ef7;
+  --green: #3ecf8e;
+  --amber: #f5a623;
+  --red: #e05252;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 56px);
+}
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.status-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.device-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.device-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.device-item:hover {
+  background: var(--surface);
+}
+
+.device-item.active {
+  background: var(--surface2);
+  border-left: 2px solid var(--accent);
+}
+
+.device-qr {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.device-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.device-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.status-new {
+  background: rgba(62,207,142,0.12);
+  color: var(--green);
+}
+
+.status-replaced {
+  background: rgba(245,166,35,0.12);
+  color: var(--amber);
+}
+
+.status-faulty {
+  background: rgba(224,82,82,0.12);
+  color: var(--red);
+}
+
+.main {
+  overflow-y: auto;
+}
+
+.empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.device-header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.device-title {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.device-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 24px;
+}
+
+.stat {
+  text-align: right;
+}
+
+.stat-val {
+  font-family: var(--mono);
+  font-size: 18px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.content-area {
+  padding: 28px 32px;
+}
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 20px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--border);
+}
+
+.tl-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  padding-bottom: 28px;
+}
+
+.tl-dot {
+  position: absolute;
+  left: -16px;
+  top: 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+
+.tl-dot-in {
+  background: var(--green);
+}
+
+.tl-dot-out {
+  background: var(--amber);
+}
+
+.tl-time {
+  padding-top: 10px;
+}
+
+.tl-timestamp {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tl-date {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--border2);
+}
+
+.tl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.tl-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tl-entry-type {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.entry-in {
+  background: rgba(62,207,142,0.1);
+  color: var(--green);
+}
+
+.entry-out {
+  background: rgba(245,166,35,0.1);
+  color: var(--amber);
+}
+
+.tl-stage {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tl-state-pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 7px;
+}
+
+.tl-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.tl-meta-item {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+#error-msg {
+  color: var(--red);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.loading {
+  color: var(--accent);
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    DEVICE JOURNEY TRACKER
+  </div>
+
+  <div class="header-right">
+    <span class="badge" id="scan-count">0 scans</span>
+    <span class="badge" id="device-count">0 devices</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Live Device Data</div>
+
+      <div class="status-box">
+        Connected to Google Sheets<br>
+        Auto-refresh enabled
+
+        <div id="error-msg"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Devices</div>
+    </div>
+
+    <div class="device-list" id="device-list"></div>
+  </aside>
+
+  <main class="main" id="main">
+
+    <div class="empty-state">
+      <div class="loading">Loading device data...</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxcpcoY5u_DKLCjxLrIA7HXYiH6pmumsb8dayG9dFEKulCVUbSrLQNadX6y3SNVNo7o/exec';
+
+let allRows = [];
+let devices = {};
+let activeQR = null;
+
+function formatDate(dateValue) {
+
+  const d = new Date(dateValue);
+
+  return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+function formatTime(timeValue) {
+
+  const d = new Date(timeValue);
+
+  return d.toLocaleTimeString('en-IN', {
+    hour12: false
+  });
+}
+
+function toTimestamp(row) {
+  return new Date(`${row.date} ${row.time}`);
+}
+
+function fmtDuration(ms) {
+
+  if (ms < 0) return '—';
+
+  const s = Math.round(ms / 1000);
+
+  if (s < 60) return `${s}s`;
+
+  const m = Math.floor(s / 60);
+
+  if (m < 60) return `${m}m ${s % 60}s`;
+
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+
+function fmtTime(dt) {
+
+  return dt.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+function fmtDate(dt) {
+
+  return dt.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+
+function getStatus(rows) {
+
+  const states = rows.map(r => r.device_state);
+
+  if (states.some(s => (s || '').toUpperCase() === 'REPLACED')) {
+    return 'replaced';
+  }
+
+  if (states.some(s => (s || '').toUpperCase() === 'FAULTY')) {
+    return 'faulty';
+  }
+
+  return 'new';
+}
+
+async function loadData() {
+
+  const errEl = document.getElementById('error-msg');
+
+  try {
+
+    const response = await fetch(WEBAPP_URL);
+
+    const json = await response.json();
+
+    allRows = json.map(r => {
+
+      return {
+        id: r.ID || '',
+        entry_type: r.Entry_Type || '',
+        qr_code: r.QR_Code || '',
+        stage: r.Stage || '',
+        device_state: r.Device_state || '',
+        role: r.Role || '',
+        date: formatDate(r.Date),
+        time: formatTime(r.Time),
+        name: r.Name || '',
+        email: r.Email || '',
+        location: r.Location || ''
+      };
+    });
+
+    allRows.forEach(r => {
+      r._ts = toTimestamp(r);
+    });
+
+    allRows.sort((a, b) => a._ts - b._ts);
+
+    devices = {};
+
+    allRows.forEach(r => {
+
+      const qr = r.qr_code;
+
+      if (!devices[qr]) {
+        devices[qr] = [];
+      }
+
+      devices[qr].push(r);
+    });
+
+    const qrs = Object.keys(devices);
+
+    document.getElementById('scan-count').textContent =
+      `${allRows.length} scans`;
+
+    document.getElementById('device-count').textContent =
+      `${qrs.length} devices`;
+
+    renderDeviceList(qrs);
+
+    if (qrs.length > 0) {
+      selectDevice(qrs[0]);
+    }
+
+  } catch(e) {
+
+    console.error(e);
+
+    errEl.textContent = 'Unable to connect to Google Sheets';
+  }
+}
+
+function renderDeviceList(qrs) {
+
+  const el = document.getElementById('device-list');
+
+  el.innerHTML = '';
+
+  qrs.forEach(qr => {
+
+    const rows = devices[qr];
+
+    const status = getStatus(rows);
+
+    const last = rows[rows.length - 1];
+
+    const div = document.createElement('div');
+
+    div.className = 'device-item';
+
+    div.onclick = () => selectDevice(qr);
+
+    div.innerHTML = `
+      <div>
+        <div class="device-qr">${qr}</div>
+        <div class="device-meta">
+          ${rows.length} scans · ${last.stage}
+        </div>
+      </div>
+
+      <span class="device-status status-${status}">
+        ${status.toUpperCase()}
+      </span>
+    `;
+
+    el.appendChild(div);
+  });
+}
+
+function selectDevice(qr) {
+
+  activeQR = qr;
+
+  document.querySelectorAll('.device-item').forEach(el => {
+
+    el.classList.toggle(
+      'active',
+      el.querySelector('.device-qr').textContent === qr
+    );
+  });
+
+  renderDevice(qr);
+}
+
+function renderDevice(qr) {
+
+  const rows = devices[qr];
+
+  const status = getStatus(rows);
+
+  const first = rows[0];
+
+  const last = rows[rows.length - 1];
+
+  const totalMs = last._ts - first._ts;
+
+  let timelineHTML = '';
+
+  rows.forEach((r, i) => {
+
+    const isIn = r.entry_type.toUpperCase() === 'IN';
+
+    const dotClass = isIn ? 'tl-dot-in' : 'tl-dot-out';
+
+    const typeClass = isIn ? 'entry-in' : 'entry-out';
+
+    timelineHTML += `
+
+      <div class="tl-item">
+
+        <div class="tl-dot ${dotClass}"></div>
+
+        <div class="tl-time">
+          <div class="tl-timestamp">${fmtTime(r._ts)}</div>
+          <div class="tl-date">${fmtDate(r._ts)}</div>
+        </div>
+
+        <div>
+
+          <div class="tl-card">
+
+            <div class="tl-card-header">
+
+              <div style="display:flex;gap:10px;align-items:center">
+
+                <span class="tl-entry-type ${typeClass}">
+                  ${r.entry_type}
+                </span>
+
+                <span class="tl-stage">
+                  ${r.stage}
+                </span>
+              </div>
+
+              <span class="tl-state-pill">
+                ${r.device_state}
+              </span>
+            </div>
+
+            <div class="tl-meta">
+
+              <div class="tl-meta-item">
+                ${r.name}
+              </div>
+
+              <div class="tl-meta-item">
+                ${r.role}
+              </div>
+
+              <div class="tl-meta-item">
+                ${r.location}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('main').innerHTML = `
+
+    <div class="device-header">
+
+      <div>
+        <div class="device-title">${qr}</div>
+
+        <div class="device-subtitle">
+          ${rows.length} scan events
+        </div>
+      </div>
+
+      <div class="stats-row">
+
+        <div class="stat">
+          <div class="stat-val">${status.toUpperCase()}</div>
+          <div class="stat-label">State</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-val">${fmtDuration(totalMs)}</div>
+          <div class="stat-label">Journey Time</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-val">${rows.length}</div>
+          <div class="stat-label">Events</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <div class="section-title">
+        Journey Timeline
+      </div>
+
+      <div class="timeline">
+        ${timelineHTML}
+      </div>
+    </div>
+  `;
+}
+
+window.onload = () => {
+
+  loadData();
+
+  setInterval(() => {
+    loadData();
+  }, 30000);
+};
+
+</script>
+
+</body>
+</html>
